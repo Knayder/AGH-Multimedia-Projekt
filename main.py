@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from skimage.metrics import structural_similarity
 import time
 
 # cap = cv2.VideoCapture('http://live.uci.agh.edu.pl/video/stream1.cgi?start=1543408695')
@@ -43,6 +44,13 @@ while cap.isOpened():
     #był threshold ale brakowało blura
     # blur = cv2.GaussianBlur(gray, (31, 31), 3)
     # thresh = cv2.threshold(blur, 25, 255, cv2.THRESH_BINARY)[1]
+
+    # ogolnie to thresholding na samej szarości jest do kitu i czytałem ze powinno sie go robic na hsv tylko wtedy moze pojawic sie taki problem ze bedzie to zbyt czule u znowu szumy beda wykrywane jako ruch
+    # znalazlem nawet kod na stacku
+    # https://stackoverflow.com/questions/27035672/cv-extract-differences-between-two-images
+    # tutaj też ciekawe rzeczy SPRAWDZONE XD skutecznie obniża fpsy do 5
+    # https://stackoverflow.com/questions/56183201/detect-and-visualize-differences-between-two-images-with-opencv-python
+
     thresh = cv2.threshold(gray, 23, 200, cv2.THRESH_TOZERO)[1]
     dilated = cv2.dilate(thresh, None, iterations=4)
     contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
