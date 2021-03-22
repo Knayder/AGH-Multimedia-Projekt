@@ -1,10 +1,75 @@
+"""
 import numpy as np
 import cv2
-from skimage.metrics import structural_similarity
-import time
 
 cap = cv2.VideoCapture('http://live.uci.agh.edu.pl/video/stream1.cgi?start=1543408695')
-# cap = cv2.VideoCapture('https://edge01.cdn.wolfcloud.pl/lookcam/6Q3eV9rn8O04xwZGyXWALe1kRDlm6VoPk6zKpMaE3rP5d7BQYv92qgbJnRyZ2g5a/playlist.m3u8?token=J8aY7ewuMWIjLFgMlajp-g&expires=1616106248')
+
+while(cap.isOpened()):
+    ret, frame = cap.read()
+
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    cv2.imshow('frame',gray)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
+
+import cv2
+import numpy as np
+
+if __name__ == '__main__' :
+    # Read image
+    img = cv2.imread("test.png")
+    cv2.namedWindow("Image",2)
+    roi = cv2.selectROI("Image", img, False, False)
+
+    ## Display the roi
+    if roi is not None:
+        x,y,w,h = roi
+        mask = np.zeros_like(img, np.uint8)
+        cv2.rectangle(mask, (x,y), (x+w, y+h), (255,255,255), -1)
+        masked = cv2.bitwise_and(img, mask )
+        cv2.imshow("mask", mask)
+        cv2.imshow("ROI", masked)
+
+    cv2.waitKey()
+
+import cv2
+import numpy as np
+
+drawing = False
+def draw_circle(event,x,y,flags,param):
+    #if event == cv2.EVENT_LBUTTONDBLCLK:
+    print(cv2.EVENT_MBUTTONUP)
+    global drawing
+    if event == cv2.EVENT_LBUTTONDOWN:
+        drawing = True
+    if event == cv2.EVENT_LBUTTONUP:
+        drawing = False
+    if drawing:
+        cv2.circle(img,(x,y),20,(255,0,0),-1)
+    
+
+# Create a black image, a window and bind the function to window
+img = np.zeros((512,512,3), np.uint8)
+cv2.namedWindow('image')
+cv2.setMouseCallback('image',draw_circle)
+
+while(1):
+    cv2.imshow('image',img)
+    if cv2.waitKey(20) & 0xFF == 27:
+        break
+cv2.destroyAllWindows()
+"""
+import numpy as np
+import cv2
+#from skimage.metrics import structural_similarity
+import time
+
+#cap = cv2.VideoCapture('http://live.uci.agh.edu.pl/video/stream1.cgi?start=1543408695')
+cap = cv2.VideoCapture('https://edge01.cdn.wolfcloud.pl/lookcam/6Q3eV9rn8O04xwZGyXWALe1kRDlm6VoPk6zKpMaE3rP5d7BQYv92qgbJnRyZ2g5a/playlist.m3u8?token=J8aY7ewuMWIjLFgMlajp-g&expires=1616106248')
 
 # szczerze nie wiem czy potrzebne, albo nie do końca wiem jak działa
 
@@ -50,11 +115,36 @@ bg_buffer = []
 
 delay_counter = 0
 
+
+
+cv2.namedWindow('Security Feed')
+
+drawing = False
+def draw_circle(event,x,y,flags,param):
+    global drawing
+    global maskImg
+    if event == cv2.EVENT_LBUTTONDOWN:
+        drawing = True
+    if event == cv2.EVENT_LBUTTONUP:
+        drawing = False
+    if drawing:
+        cv2.circle(maskImg,(x,y),40,(0,0,0),-1)
+
+maskImg = np.ones((  int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), 3  ), np.uint8)
+redBackground = np.ones((  int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), 3  ), np.uint8)
+whiteBackground = np.ones((  int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), 3  ), np.uint8)
+for y in range(int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))):
+    for x in range(int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))):
+        redBackground[y][x] = [255, 255, 0];
+
+
+cv2.setMouseCallback('Security Feed',draw_circle)
+
 while cap.isOpened():
     # to trzeba będzie po testować ale wydaje mi się że sprawdzanie różnicy już zblurowanych klatek lepiej niweluje
     # szumy, które bardzo lubią być wykrywane jako ruch
-    frameOldB = cv2.GaussianBlur(cv2.resize(frameOld, (WIDTH_BLUR, HEIGHT_BLUR), interpolation=cv2.INTER_CUBIC), (5, 5), 0)
-    frameNewB = cv2.GaussianBlur(cv2.resize(frameOld, (WIDTH_BLUR, HEIGHT_BLUR), interpolation=cv2.INTER_CUBIC), (5, 5), 0)
+    frameOldB = cv2.GaussianBlur(cv2.resize(frameOld*maskImg, (WIDTH_BLUR, HEIGHT_BLUR), interpolation=cv2.INTER_CUBIC), (5, 5), 0)
+    frameNewB = cv2.GaussianBlur(cv2.resize(frameOld*maskImg, (WIDTH_BLUR, HEIGHT_BLUR), interpolation=cv2.INTER_CUBIC), (5, 5), 0)
 
     # Dodajemy nową klatke do bufferów
     motion_buffer.append(frameNewB.astype('float32'))
@@ -110,7 +200,9 @@ while cap.isOpened():
         cv2.putText(frameOld, "Movement detected", (10, 20), cv2.FONT_HERSHEY_SIMPLEX,
                     1, (0, 0, 255), 3)
 
-    cv2.imshow("Security Feed", frameOld)
+    cv2.imshow("Security Feed", frameOld*(whiteBackground + redBackground*(1-maskImg)))
+    #cv2.imshow("Security Feed", 255*maskImg)
+    #cv2.imshow("Security Feed", gray);
 
     frameOld = frameNew
     _, frameNew = cap.read()
