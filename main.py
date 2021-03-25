@@ -69,7 +69,8 @@ import cv2
 import time
 
 #cap = cv2.VideoCapture('http://live.uci.agh.edu.pl/video/stream1.cgi?start=1543408695')
-cap = cv2.VideoCapture('https://edge01.cdn.wolfcloud.pl/lookcam/6Q3eV9rn8O04xwZGyXWALe1kRDlm6VoPk6zKpMaE3rP5d7BQYv92qgbJnRyZ2g5a/playlist.m3u8?token=J8aY7ewuMWIjLFgMlajp-g&expires=1616106248')
+# cap = cv2.VideoCapture('https://edge01.cdn.wolfcloud.pl/lookcam/6Q3eV9rn8O04xwZGyXWALe1kRDlm6VoPk6zKpMaE3rP5d7BQYv92qgbJnRyZ2g5a/playlist.m3u8?token=J8aY7ewuMWIjLFgMlajp-g&expires=1616106248')
+cap = cv2.VideoCapture('http://live.uci.agh.edu.pl/video/stream1.cgi?start=1543408695')
 
 # szczerze nie wiem czy potrzebne, albo nie do końca wiem jak działa
 
@@ -120,8 +121,10 @@ delay_counter = 0
 cv2.namedWindow('Security Feed')
 
 drawing = False
+erasing = False
 def draw_circle(event,x,y,flags,param):
     global drawing
+    global erasing
     global maskImg
     if event == cv2.EVENT_LBUTTONDOWN:
         drawing = True
@@ -129,13 +132,22 @@ def draw_circle(event,x,y,flags,param):
         drawing = False
     if drawing:
         cv2.circle(maskImg,(x,y),40,(0,0,0),-1)
+        cv2.circle(redBackground,(x,y),40,(255,255,0),-1)
+    if event == cv2.EVENT_RBUTTONDOWN:
+        erasing = True
+    if event == cv2.EVENT_RBUTTONUP:
+        erasing = False
+    if erasing:
+        cv2.circle(redBackground,(x,y),40,(0,0,0),-1)
+        cv2.circle(maskImg,(x,y),40,(255,255,255),-1)
+        
 
 maskImg = np.ones((  int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), 3  ), np.uint8)
 redBackground = np.ones((  int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), 3  ), np.uint8)
 whiteBackground = np.ones((  int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), 3  ), np.uint8)
 for y in range(int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))):
     for x in range(int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))):
-        redBackground[y][x] = [255, 255, 0];
+        redBackground[y][x] = [255, 255, 0]
 
 
 cv2.setMouseCallback('Security Feed',draw_circle)
@@ -190,15 +202,16 @@ while cap.isOpened():
 
     contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    for contour in contours:
-        if cv2.contourArea(contour) < MIN_AREA:
-            continue
+    if not drawing and not erasing:
+        for contour in contours:
+            if cv2.contourArea(contour) < MIN_AREA:
+                continue
 
-        # Rysowanie prostokątów wokół ruszających się obiektóœ
-        (x, y, width, height) = cv2.boundingRect(contour)
-        cv2.rectangle(frameOld, (x, y), (x + width, y + height), (0, 255, 0), 2)
-        cv2.putText(frameOld, "Movement detected", (10, 20), cv2.FONT_HERSHEY_SIMPLEX,
-                    1, (0, 0, 255), 3)
+            # Rysowanie prostokątów wokół ruszających się obiektów
+            (x, y, width, height) = cv2.boundingRect(contour)
+            cv2.rectangle(frameOld, (x, y), (x + width, y + height), (0, 255, 0), 2)
+            cv2.putText(frameOld, "Movement detected", (10, 20), cv2.FONT_HERSHEY_SIMPLEX,
+                        1, (0, 0, 255), 3)
 
     cv2.imshow("Security Feed", frameOld*(whiteBackground + redBackground*(1-maskImg)))
     #cv2.imshow("Security Feed", 255*maskImg)
