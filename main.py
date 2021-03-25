@@ -148,6 +148,8 @@ class detector:
                                         int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) / 10),
                                         int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) / 10))
 
+        self.DEBUG_MODE = False
+
     def draw_circle(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             self.drawing = True
@@ -217,14 +219,21 @@ class detector:
                                 1, (0, 0, 255), 3)
 
             cv2.imshow("Security Feed", frame_old * (self.whiteBackground + self.redBackground * (1 - self.maskImg)))
-            # cv2.imshow("Security Feed", 255*maskImg)
-            # cv2.imshow("Security Feed", gray);
+            if self.DEBUG_MODE:
+                cv2.imshow("Mask", 255 * self.maskImg)
+                cv2.imshow("Diff", gray)
 
             frame_old = frame_new
             _, frame_new = self.cap.read()
 
-            if cv2.waitKey(1) == 27:
+            key = cv2.waitKey(10)
+            if key == 27:
                 break
+            elif key == 100:
+                if not self.DEBUG_MODE:
+                    self.DEBUG_MODE = True
+                else:
+                    self.DEBUG_MODE = False
 
         self.cap.release()
         cv2.destroyAllWindows()
