@@ -219,6 +219,7 @@ class detector:
                                 1, (0, 0, 255), 3)
 
             cv2.imshow("Security Feed", frame_old * (self.whiteBackground + self.redBackground * (1 - self.maskImg)))
+            # TODO - I'M SO BASIC, UGH
             if self.DEBUG_MODE:
                 cv2.imshow("Mask", 255 * self.maskImg)
                 cv2.imshow("Diff", gray)
@@ -226,6 +227,7 @@ class detector:
             frame_old = frame_new
             _, frame_new = self.cap.read()
 
+            # TODO - I DONT WANNA BE SO CRUDE!
             key = cv2.waitKey(10)
             if key == 27:
                 break
