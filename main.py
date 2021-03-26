@@ -1,68 +1,7 @@
-"""
-import numpy as np
-import cv2
+print("Input source path: ", end='')
+source = input()
 
-cap = cv2.VideoCapture('http://live.uci.agh.edu.pl/video/stream1.cgi?start=1543408695')
 
-while(cap.isOpened()):
-    ret, frame = cap.read()
-
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    cv2.imshow('frame',gray)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
-
-import cv2
-import numpy as np
-
-if __name__ == '__main__' :
-    # Read image
-    img = cv2.imread("test.png")
-    cv2.namedWindow("Image",2)
-    roi = cv2.selectROI("Image", img, False, False)
-
-    ## Display the roi
-    if roi is not None:
-        x,y,w,h = roi
-        mask = np.zeros_like(img, np.uint8)
-        cv2.rectangle(mask, (x,y), (x+w, y+h), (255,255,255), -1)
-        masked = cv2.bitwise_and(img, mask )
-        cv2.imshow("mask", mask)
-        cv2.imshow("ROI", masked)
-
-    cv2.waitKey()
-
-import cv2
-import numpy as np
-
-drawing = False
-def draw_circle(event,x,y,flags,param):
-    #if event == cv2.EVENT_LBUTTONDBLCLK:
-    print(cv2.EVENT_MBUTTONUP)
-    global drawing
-    if event == cv2.EVENT_LBUTTONDOWN:
-        drawing = True
-    if event == cv2.EVENT_LBUTTONUP:
-        drawing = False
-    if drawing:
-        cv2.circle(img,(x,y),20,(255,0,0),-1)
-    
-
-# Create a black image, a window and bind the function to window
-img = np.zeros((512,512,3), np.uint8)
-cv2.namedWindow('image')
-cv2.setMouseCallback('image',draw_circle)
-
-while(1):
-    cv2.imshow('image',img)
-    if cv2.waitKey(20) & 0xFF == 27:
-        break
-cv2.destroyAllWindows()
-"""
 import numpy as np
 import cv2
 
@@ -242,5 +181,7 @@ class detector:
 
 
 if __name__ == '__main__':
-    detector = detector('http://live.uci.agh.edu.pl/video/stream1.cgi?start=1543408695')
+    # http://live.uci.agh.edu.pl/video/stream1.cgi?start=1543408695
+    
+    detector = detector(source)
     detector.detect()
