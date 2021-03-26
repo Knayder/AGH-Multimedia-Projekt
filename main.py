@@ -5,8 +5,7 @@ source = input()
 import numpy as np
 import cv2
 
-# Dumpster
-# TODO - REMOVE!
+# Example image sources
 # =========================================================================
 # cap = cv2.VideoCapture('https://edge01.cdn.wolfcloud.pl/lookcam/6Q3eV9rn8O04xwZGyXWALe1kRDlm6VoPk6zKpMaE3rP5d7BQYv92qgbJnRyZ2g5a/playlist.m3u8?token=J8aY7ewuMWIjLFgMlajp-g&expires=1616106248')
 # cap = cv2.VideoCapture('http://live.uci.agh.edu.pl/video/stream1.cgi?start=1543408695')
@@ -25,6 +24,8 @@ BRIGHTNESS_DISCARD = 20
 # ==========================================================================
 cv2.namedWindow('Security Feed')
 
+debugMode = 0
+amountOfDebugModes = 3
 
 # ==========================================================================
 
@@ -48,7 +49,6 @@ class imageProcessor:
         diff[diff > 0] = 254
 
         gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-        # Możliwe że nie zadziała (oryginalny kod troszeczkę inny)
         return cv2.resize(gray, (self.WIDTH_DETECT, self.HEIGHT_DETECT))
 
 
@@ -102,10 +102,12 @@ class detector:
         if event == cv2.EVENT_RBUTTONUP:
             self.erasing = False
         if self.erasing:
-            cv2.circle(self.redBackground, (x, y), 40, (0, 0, 0), -1)
-            cv2.circle(self.maskImg, (x, y), 40, (255, 255, 255), -1)
+            cv2.circle(self.maskImg, (x, y), 40, (1, 1, 1), -1)
+            cv2.circle(self.redBackground, (x, y), 40, (1, 1, 1), -1)
 
     def detect(self):
+        global debugMode
+        global amountOfDebugModes
         # Read two frames one after another
         # First value in the tuple is 'true', so we ignore it
         _, frame_old = self.cap.read()
@@ -137,8 +139,8 @@ class detector:
 
             gray = self.processor.calculate_diff(avg_bg, avg_motion)
 
-            thresh = cv2.threshold(gray, 30, 255, cv2.THRESH_BINARY)[1]
-            dilated = cv2.dilate(thresh, None, iterations=4)
+            thresh = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)[1]
+            dilated = cv2.dilate(thresh, None, iterations=3)
 
             dilated = dilated.astype(np.uint8)
             dilated = cv2.resize(dilated, (self.OG_WIDTH, self.OG_HEIGHT))
@@ -157,24 +159,22 @@ class detector:
                     cv2.putText(frame_old, "Movement detected", (10, 20), cv2.FONT_HERSHEY_SIMPLEX,
                                 1, (0, 0, 255), 3)
 
-            cv2.imshow("Security Feed", frame_old * (self.whiteBackground + self.redBackground * (1 - self.maskImg)))
-            # TODO - I'M SO BASIC, UGH
-            if self.DEBUG_MODE:
-                cv2.imshow("Mask", 255 * self.maskImg)
-                cv2.imshow("Diff", gray)
+            if debugMode == 0:
+                cv2.imshow("Security Feed", frame_old * (self.whiteBackground + self.redBackground * (1 - self.maskImg)))
+            elif debugMode == 1:
+                cv2.imshow("Security Feed", 255 * self.maskImg)
+            elif debugMode == 2:
+                cv2.imshow("Security Feed", cv2.resize(gray, (self.OG_WIDTH, self.OG_HEIGHT)))
 
             frame_old = frame_new
             _, frame_new = self.cap.read()
 
-            # TODO - I DONT WANNA BE SO CRUDE!
             key = cv2.waitKey(10)
             if key == 27:
                 break
             elif key == 100:
-                if not self.DEBUG_MODE:
-                    self.DEBUG_MODE = True
-                else:
-                    self.DEBUG_MODE = False
+                debugMode = (debugMode+1) % amountOfDebugModes
+
 
         self.cap.release()
         cv2.destroyAllWindows()
