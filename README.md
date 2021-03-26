@@ -8,7 +8,7 @@ Na początku program poprosi o podanie źródła. (Link do video, ściezka do pl
 * `esc` - wyłączenie aplikacji
 ## Projekt zrealizowany przez:
 
-* Przemysław Kolaszynski
-* Tomek Jatkowski
+* Przemysław Kolaszyński
+* Tomasz Jatkowski
 * Piotr Witek
 * Mateusz Łączny
